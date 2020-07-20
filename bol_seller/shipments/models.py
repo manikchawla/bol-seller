@@ -9,6 +9,7 @@ class Seller(TimeStampedModel):
     shop_name = models.CharField(_("Shop Name"), max_length=255, blank=False, null=False)
     client_id = models.CharField(_("Client ID"), max_length=100, blank=True, null=True)
     client_secret = models.CharField(_("Client Secret"), max_length=255, blank=True, null=True)
+    last_synced_at = models.DateTimeField(_("Last synced at"), blank=True, null=True)
 
     def __str__(self):
         return "{} {}".format(self.first_name, self.last_name)

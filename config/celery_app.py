@@ -1,5 +1,7 @@
 import os
+import kombu
 from celery import Celery
+
 
 # set the default Django settings module for the 'celery' program.
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.local")
@@ -14,3 +16,13 @@ app.config_from_object("django.conf:settings", namespace="CELERY")
 
 # Load task modules from all registered Django app configs.
 app.autodiscover_tasks()
+
+def is_broker_available():
+    try:
+        conn = kombu.connection.Connection()
+        conn.connect()
+        conn.close()
+        return True
+    except Exception as e:
+        print ("Unable to connect to the Rabbitmq server")
+        return False

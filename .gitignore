@@ -277,6 +277,9 @@ pyvenv.cfg
 pip-selfcheck.json
 .env
 
+## Migrations
+migrations
+*.sqlite
 
 ### Project template
 
