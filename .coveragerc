@@ -1,0 +1,5 @@
+[run]
+include = bol_seller/*
+omit = *migrations*, *tests*
+plugins =
+    django_coverage_plugin
