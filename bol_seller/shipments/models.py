@@ -19,6 +19,7 @@ class Seller(TimeStampedModel):
 
 
 class Shipment(TimeStampedModel):
+    seller = models.ForeignKey(Seller, _("Seller"), blank=False, null=False)
     shipment_id = models.PositiveIntegerField(_("Shipment ID"), primary_key=True, blank=False, null=False)
     pickup_point = models.BooleanField(_("Pickup Point"), blank=True, null=True)
     shipment_date = models.DateTimeField(_("Shipment Date"), blank=False, null=False)

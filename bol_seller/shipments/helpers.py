@@ -2,13 +2,13 @@ import json
 from .models import Shipment, ShipmentItem, Order, OrderItem, Transport
 
 
-def save_shipment_list(shipment_list):
+def save_shipment_list(seller_id, shipment_list):
     """
     Helper to detect new shipments and save them in the database
     """
     shipment_ids = [obj['shipmentId'] for obj in shipment_list]
     saved_shipments = Shipment.objects.filter(
-        shipment_id__in=shipment_ids
+        seller_id=seller_id, shipment_id__in=shipment_ids
     ).values_list('shipment_id', flat=True)
 
     new_shipment_ids = set(shipment_ids) - set(saved_shipments)
@@ -17,6 +17,7 @@ def save_shipment_list(shipment_list):
     new_shipment_obj_list = []
     for shipment in new_shipments:
         shipment_dict = {
+            'seller_id': seller_id,
             'shipment_id': shipment.get('shipmentId'),
             'shipment_date': shipment.get('shipmentDate')
         }
@@ -37,8 +38,8 @@ def save_shipment_detail(shipment_detail):
     # Update shipment
     shipment.pickup_point = shipment_detail.get('pickupPoint')
     shipment.shipment_reference = shipment_detail.get('shipmentReference')
-    shipment.billing_details = shipment_detail.get('billingDetails')
-    shipment.customer_details = shipment_detail.get('customerDetails')
+    shipment.billing_details = json.dumps(shipment_detail.get('billingDetails'))
+    shipment.customer_details = json.dumps(shipment_detail.get('customerDetails'))
     shipment.detail_fetched = True
     shipment.save()
 

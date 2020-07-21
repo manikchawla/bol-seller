@@ -35,7 +35,7 @@ def sync_shipment_list(
 
         elif response.status_code == 200:
             page += 1
-            save_shipment_list(response.json()['shipments'])
+            save_shipment_list(request_manager.seller_id, response.json()['shipments'])
             if response.headers['x-ratelimit-remaining'] == '0':
                 sync_shipment_list.apply_async(
                     (request_manager, fulfilment_method, page, fetched_both_methods),
@@ -53,7 +53,9 @@ def sync_shipment_list(
 
 @celery_app.task()
 def sync_shipment_details(request_manager):
-    unfetched_shipments = Shipment.objects.filter(detail_fetched=False)
+    unfetched_shipments = Shipment.objects.filter(
+        seller_id=request_manager.seller_id, detail_fetched=False
+    )
 
     if unfetched_shipments.count() > 0:
         for counter, shipment in enumerate(unfetched_shipments):

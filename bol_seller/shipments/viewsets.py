@@ -2,14 +2,25 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination
 
 from django.utils import timezone
+from django.db.models import Prefetch
 
-from .serializers import SellerDetailSerializer
+from .serializers import (
+    SellerDetailSerializer,
+    ShipmentDetailSerializer
+)
 from .request_managers import SellerRequestManager
 from .tasks import sync_shipment_list, sync_shipment_details
-from .models import Seller
+from .models import Seller, Shipment, Transport
 from .constants import SYNC_AFTER_MIN, START_DETAIL_SYNC_AFTER_SEC
+
+
+class CustomPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
 
 class SellerViewSet(ModelViewSet):
@@ -65,7 +76,7 @@ class SellerViewSet(ModelViewSet):
             if not seller.last_synced_at or \
                 timezone.now() - seller.last_synced_at > timezone.timedelta(minutes=SYNC_AFTER_MIN):
                 
-                request_manager = SellerRequestManager(seller.client_id, seller.client_secret)
+                request_manager = SellerRequestManager(seller.id, seller.client_id, seller.client_secret)
                 sync_shipment_list.delay(request_manager)
                 sync_shipment_details.apply_async(
                     (request_manager,), countdown=START_DETAIL_SYNC_AFTER_SEC
@@ -88,4 +99,41 @@ class SellerViewSet(ModelViewSet):
 
 
 class ShipmentViewSet(ModelViewSet):
-    pass
+    """
+    Viewset for shipment endpoints
+    """
+    queryset = Shipment.objects.all()
+    serializer_class = SellerDetailSerializer
+    pagination_class = CustomPagination
+
+    def list(self, request, *args, **kwargs):
+        seller_id = request.query_params.get('seller_id')
+        if seller_id:
+            shipments = Shipment.objects.filter(
+                seller_id=seller_id, detail_fetched=True
+            ).prefetch_related(
+                'shipmentitem_set',
+                'shipmentitem_set__order_item',
+                'shipmentitem_set__order_item__order',
+                Prefetch('transport_set', queryset=Transport.objects.all(), to_attr='prefetched_transport')
+            )
+
+            page = self.paginate_queryset(shipments)
+            serialized_list = ShipmentDetailSerializer(page, many=True)
+            return self.get_paginated_response(serialized_list.data)
+        return Response({'msg': 'Please send a seller ID'}, status=status.HTTP_400_BAD_REQUEST)
+
+    def retrieve(self, request, pk=None, *args, **kwargs):
+        return Response({}, status=status.HTTP_501_NOT_IMPLEMENTED)
+    
+    def create(self, request, *args, **kwargs):
+        return Response({}, status=status.HTTP_501_NOT_IMPLEMENTED)
+    
+    def update(self, request, pk=None, *args, **kwargs):
+        return Response({}, status=status.HTTP_501_NOT_IMPLEMENTED)
+    
+    def partial_update(self, request, pk=None, *args, **kwargs):
+        return Response({}, status=status.HTTP_501_NOT_IMPLEMENTED)
+    
+    def destroy(self, request, pk=None, *args, **kwargs):
+        return Response({}, status=status.HTTP_501_NOT_IMPLEMENTED)

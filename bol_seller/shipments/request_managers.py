@@ -4,7 +4,8 @@ from .constants import BOL_GET_ACCESS_TOKEN_URL
 
 
 class SellerRequestManager:
-    def __init__(self, client_id, client_secret):
+    def __init__(self, seller_id, client_id, client_secret):
+        self.seller_id = seller_id
         self.client_id = client_id
         self.client_secret = client_secret
 
