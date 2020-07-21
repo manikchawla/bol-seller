@@ -4,9 +4,9 @@ A set of APIs to sync your shipments from Bol.com to a local database.
 
 ## Setup
 
-- Install and run rabbitmq-server
+- Install and run rabbitmq-server.
 
-- Clone the repository
+- Clone the repository.
 
 - Set the following ENV variable in virtualenv's postactivate file:
 ```bash
