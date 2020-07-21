@@ -7,9 +7,9 @@ from django.utils import timezone
 
 from .serializers import SellerDetailSerializer
 from .request_managers import SellerRequestManager
-from .tasks import sync_shipment_list
+from .tasks import sync_shipment_list, sync_shipment_details
 from .models import Seller
-from .constants import SYNC_AFTER_MIN
+from .constants import SYNC_AFTER_MIN, START_DETAIL_SYNC_AFTER_SEC
 
 
 class SellerViewSet(ModelViewSet):
@@ -20,7 +20,7 @@ class SellerViewSet(ModelViewSet):
     serializer_class = SellerDetailSerializer
 
     def list(self, request, *args, **kwargs):
-        serialized_list = SellerDetailSerializer(query_all_sellers(), many=True)
+        serialized_list = SellerDetailSerializer(Seller.objects.all(), many=True)
         return Response(serialized_list.data, status=status.HTTP_200_OK)
     
     def retrieve(self, request, pk=None, *args, **kwargs):
@@ -51,8 +51,11 @@ class SellerViewSet(ModelViewSet):
                 
                 request_manager = SellerRequestManager(seller.client_id, seller.client_secret)
                 sync_shipment_list.delay(request_manager)
-                # seller.last_synced_at = timezone.now()
-                # seller.save()
+                sync_shipment_details.apply_async(
+                    (request_manager,), countdown=START_DETAIL_SYNC_AFTER_SEC
+                )
+                seller.last_synced_at = timezone.now()
+                seller.save()
                 return Response(
                     {'msg': 'Your shipments are getting synced'},
                     status=status.HTTP_200_OK

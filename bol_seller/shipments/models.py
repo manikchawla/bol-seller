@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy as _
 
 from model_utils.models import TimeStampedModel
 
-from .constants import BolFulFillmentMethods
+from .constants import BolFulFilmentMethods
 
 
 class Seller(TimeStampedModel):
@@ -27,7 +27,7 @@ class Shipment(TimeStampedModel):
     # Denormalized customer and billing details, TextField used in sqlite 
     # as an alternative for MySQL or PostgreSQL's JSONField
     customer_details = models.TextField(_("Customer Details"), blank=False, null=False)
-    billing_address = models.TextField(_("Billing Address"), blank=False, null=False)
+    billing_details = models.TextField(_("Billing Address"), blank=False, null=False)
     detail_fetched = models.BooleanField(_("Is shipment detail fetched?"), blank=False, null=False,
         default=False)
 
@@ -44,7 +44,7 @@ class Order(TimeStampedModel):
 
 
 class OrderItem(TimeStampedModel):
-    order_id = models.ForeignKey(Order, _("Order"), blank=False, null=False)
+    order = models.ForeignKey(Order, _("Order"), blank=False, null=False)
     order_item_id = models.CharField(_("Order Item ID"), primary_key=True, max_length=32, blank=False,
         null=False)
     ean = models.CharField(_("European Article Number"), max_length=14, blank=False, null=False)
@@ -53,7 +53,7 @@ class OrderItem(TimeStampedModel):
     offer_price = models.DecimalField(_("Offer Price"), max_digits=30, decimal_places=2, blank=False,
         null=False)
     offer_condition = models.CharField(_("Offer Condition"), max_length=32, blank=False, null=False)
-    offer_reference = models.CharField(_("Offer Reference"), max_length=32, blank=False, null=False)
+    offer_reference = models.CharField(_("Offer Reference"), max_length=32, blank=True, null=True)
 
     def __str__(self):
         return '{}'.format(self.order_item_id)
@@ -64,11 +64,11 @@ class ShipmentItem(TimeStampedModel):
     order = models.ForeignKey(Order, _("Order"), blank=False, null=False)
     order_item = models.ForeignKey(OrderItem, _("Order Item"), blank=False, null=False)
     latest_delivery_date = models.DateTimeField(_("Last Delivery Date"), blank=False, null=False)
-    FULFILLMENT_METHOD_OPTIONS = (
-        (BolFulFillmentMethods.FBR, 'FBR'),
-        (BolFulFillmentMethods.FBB, 'FBB')
+    FULFILMENT_METHOD_OPTIONS = (
+        (BolFulFilmentMethods.FBR, 'FBR'),
+        (BolFulFilmentMethods.FBB, 'FBB')
     )
-    fulfillment_methods = models.CharField(_("Fulfillment Method"), choices=FULFILLMENT_METHOD_OPTIONS,
+    fulfilment_method = models.CharField(_("fulfilment Method"), choices=FULFILMENT_METHOD_OPTIONS,
         max_length=6, blank=False, null=False)
     
     def __str__(self):
@@ -76,8 +76,8 @@ class ShipmentItem(TimeStampedModel):
 
 
 class Transport(TimeStampedModel):
-    shipment = models.OneToOneField(Shipment, _("Shipment"), blank=False, null=False)
-    transport_id = models.CharField(_("Transport ID"), max_length=32, blank=False, null=False)
+    shipment = models.ForeignKey(Shipment, _("Shipment"), blank=False, null=False)
+    transport_id = models.CharField(_("Transport ID"), primary_key=True, max_length=32, blank=False, null=False)
     transporter_code = models.CharField(_("Transporter Code"), max_length=32, blank=False, null=False)
     track_and_trace = models.CharField(_("Track and Trace"), max_length=32, blank=False, null=False)
 
