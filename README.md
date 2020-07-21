@@ -17,9 +17,12 @@ export CELERY_BROKER_URL='amqp://guest:guest@localhost:5672//'
 
 ```python
 pip install -r requirements/local.txt
+
 python manage.py makemigrations
 python manage.py migrate
 python manage.py runserver
+
+celery -A config.celery_app worker -l=INFO
 ```
 
 ## Usage
