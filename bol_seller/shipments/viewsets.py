@@ -6,9 +6,9 @@ from rest_framework.decorators import action
 from django.utils import timezone
 
 from .serializers import SellerDetailSerializer
-from .queries import query_all_sellers, query_seller_by_id
-from .requests import SellerRequestManager
+from .request_managers import SellerRequestManager
 from .tasks import sync_shipment_list
+from .models import Seller
 from .constants import SYNC_AFTER_MIN
 
 
@@ -16,7 +16,7 @@ class SellerViewSet(ModelViewSet):
     """
     Viewset for seller endpoints
     """
-    queryset = query_all_sellers()
+    queryset = Seller.objects.all()
     serializer_class = SellerDetailSerializer
 
     def list(self, request, *args, **kwargs):
@@ -43,7 +43,7 @@ class SellerViewSet(ModelViewSet):
         """
         API Endpoint for starting shipment sync using a Celery task
         """
-        seller = query_seller_by_id(pk)
+        seller = Seller.objects.filter(pk=pk).first()
         if seller and seller.client_id and seller.client_secret:
 
             if not seller.last_synced_at or \
@@ -51,7 +51,8 @@ class SellerViewSet(ModelViewSet):
                 
                 request_manager = SellerRequestManager(seller.client_id, seller.client_secret)
                 sync_shipment_list.delay(request_manager)
-                seller.last_synced_at = timezone.now()
+                # seller.last_synced_at = timezone.now()
+                # seller.save()
                 return Response(
                     {'msg': 'Your shipments are getting synced'},
                     status=status.HTTP_200_OK
@@ -65,3 +66,7 @@ class SellerViewSet(ModelViewSet):
             {'msg': 'Please send a valid Seller ID with Client ID and Client Secret'},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+
+class ShipmentViewSet(ModelViewSet):
+    pass
