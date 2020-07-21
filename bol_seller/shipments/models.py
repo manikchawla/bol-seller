@@ -10,8 +10,8 @@ class Seller(TimeStampedModel):
     first_name = models.CharField(_("Seller First Name"), max_length=255, blank=False, null=False)
     last_name = models.CharField(_("Seller Last Name"), max_length=255, blank=False, null=False)
     shop_name = models.CharField(_("Shop Name"), max_length=255, blank=False, null=False)
-    client_id = models.CharField(_("Client ID"), max_length=100, blank=True, null=True)
-    client_secret = models.CharField(_("Client Secret"), max_length=255, blank=True, null=True)
+    client_id = models.CharField(_("Client ID"), max_length=100, blank=False, null=False)
+    client_secret = models.CharField(_("Client Secret"), max_length=255, blank=False, null=False)
     last_synced_at = models.DateTimeField(_("Last synced at"), blank=True, null=True)
 
     def __str__(self):
@@ -22,12 +22,12 @@ class Shipment(TimeStampedModel):
     shipment_id = models.PositiveIntegerField(_("Shipment ID"), primary_key=True, blank=False, null=False)
     pickup_point = models.BooleanField(_("Pickup Point"), blank=True, null=True)
     shipment_date = models.DateTimeField(_("Shipment Date"), blank=False, null=False)
-    shipment_reference = models.CharField(_("Shipment Reference"), max_length=32, blank=False, null=False)
+    shipment_reference = models.CharField(_("Shipment Reference"), max_length=32, blank=True, null=True)
 
     # Denormalized customer and billing details, TextField used in sqlite 
     # as an alternative for MySQL or PostgreSQL's JSONField
-    customer_details = models.TextField(_("Customer Details"), blank=False, null=False)
-    billing_details = models.TextField(_("Billing Address"), blank=False, null=False)
+    customer_details = models.TextField(_("Customer Details"), blank=True, null=True)
+    billing_details = models.TextField(_("Billing Address"), blank=True, null=True)
     detail_fetched = models.BooleanField(_("Is shipment detail fetched?"), blank=False, null=False,
         default=False)
 

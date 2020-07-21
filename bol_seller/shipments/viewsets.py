@@ -24,27 +24,43 @@ class SellerViewSet(ModelViewSet):
         return Response(serialized_list.data, status=status.HTTP_200_OK)
     
     def retrieve(self, request, pk=None, *args, **kwargs):
-        return Response({}, status=status.HTTP_501_NOT_IMPLEMENTED)
+        serialized_obj = SellerDetailSerializer(Seller.objects.filter(pk=pk).first())
+        return Response(serialized_obj.data, status=status.HTTP_200_OK)
     
     def create(self, request, *args, **kwargs):
-        return Response({}, status=status.HTTP_501_NOT_IMPLEMENTED)
+        data = request.data.copy()
+        serialized_obj = SellerDetailSerializer(data=data)
+        serialized_obj.is_valid(raise_exception=True)
+        self.perform_create(serialized_obj)
+        return Response(serialized_obj.data, status=status.HTTP_201_CREATED)
     
     def update(self, request, pk=None, *args, **kwargs):
-        return Response({}, status=status.HTTP_501_NOT_IMPLEMENTED)
+        data = request.data.copy()
+        seller = Seller.objects.filter(pk=pk).first()
+        if seller:
+            serialized_obj = SellerDetailSerializer(seller, data=data, partial=True)
+            serialized_obj.is_valid(raise_exception=True)
+            self.perform_update(serialized_obj)
+            return Response(serialized_obj.data, status=status.HTTP_200_OK)
+        return Response({'msg': 'Please send a valid Seller ID'}, status=status.HTTP_400_BAD_REQUEST)
     
     def partial_update(self, request, pk=None, *args, **kwargs):
         return Response({}, status=status.HTTP_501_NOT_IMPLEMENTED)
     
     def destroy(self, request, pk=None, *args, **kwargs):
-        return Response({}, status=status.HTTP_501_NOT_IMPLEMENTED)
-    
+        seller = Seller.objects.filter(pk=pk).first()
+        if seller:
+            self.perform_destroy(seller)
+            return Response({'msg': 'The object has been deleted'}, status=status.HTTP_200_OK)
+        return Response({'msg': 'Please send a valid Seller ID'}, status=status.HTTP_400_BAD_REQUEST)
+
     @action(detail=True, methods=['post'])
     def sync_shipments(self, request, pk=None, *args, **kwargs):
         """
         API Endpoint for starting shipment sync using a Celery task
         """
         seller = Seller.objects.filter(pk=pk).first()
-        if seller and seller.client_id and seller.client_secret:
+        if seller:
 
             if not seller.last_synced_at or \
                 timezone.now() - seller.last_synced_at > timezone.timedelta(minutes=SYNC_AFTER_MIN):
@@ -66,7 +82,7 @@ class SellerViewSet(ModelViewSet):
                     status=status.HTTP_200_OK
                 )
         return Response(
-            {'msg': 'Please send a valid Seller ID with Client ID and Client Secret'},
+            {'msg': 'Please send a valid Seller ID'},
             status=status.HTTP_400_BAD_REQUEST
         )
 
