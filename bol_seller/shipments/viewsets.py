@@ -79,9 +79,7 @@ class SellerViewSet(ModelViewSet):
                 
                 request_manager = SellerRequestManager(seller.id, seller.client_id, seller.client_secret)
                 sync_shipment_list.delay(request_manager)
-                sync_shipment_details.apply_async(
-                    (request_manager,), countdown=START_DETAIL_SYNC_AFTER_SEC
-                )
+
                 seller.last_synced_at = timezone.now()
                 seller.save()
                 return Response(

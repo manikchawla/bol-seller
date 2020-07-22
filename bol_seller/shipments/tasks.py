@@ -15,7 +15,8 @@ def sync_shipment_list(
     request_manager,
     fulfilment_method=BolFulFilmentMethods.FBR,
     page=1,
-    fetched_both_methods=False):
+    fetched_both_methods=False,
+    is_detail_task_run=False):
     """
     Celery task to sync shipment list
     """
@@ -29,23 +30,28 @@ def sync_shipment_list(
         if response.status_code == 200 and response.json() == {}:
             if fetched_both_methods == False:
                 sync_shipment_list.delay(
-                    request_manager, BolFulFilmentMethods.FBB, 1, True
+                    request_manager, BolFulFilmentMethods.FBB, 1, True, is_detail_task_run
                 )
             fetch_next_page = False
 
         elif response.status_code == 200:
             page += 1
             save_shipment_list(request_manager.seller_id, response.json()['shipments'])
+
+            if is_detail_task_run == False:
+                sync_shipment_details.delay(request_manager)
+                is_detail_task_run = True
+
             if response.headers['x-ratelimit-remaining'] == '0':
                 sync_shipment_list.apply_async(
-                    (request_manager, fulfilment_method, page, fetched_both_methods),
+                    (request_manager, fulfilment_method, page, fetched_both_methods, is_detail_task_run),
                     countdown=int(response.headers['x-ratelimit-reset'])
                 )
                 fetch_next_page = False
 
         elif response.status_code == 429:
             sync_shipment_list.apply_async(
-                (request_manager, fulfilment_method, page, fetched_both_methods),
+                (request_manager, fulfilment_method, page, fetched_both_methods, is_detail_task_run),
                 countdown=int(response.headers['retry-after'])
             )
             fetch_next_page = False
