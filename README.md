@@ -28,7 +28,7 @@ celery -A config.celery_app worker -l=INFO
 ## Usage
 
 - **Seller CRUD**
-   - **GET** api/sellers
+   - **GET** api/sellers/
    - **POST** api/sellers/  
 **Fields** - first_name, last_name, shop_name, client_id, client_secret
    - **PUT** api/sellers/<seller_id>/
@@ -40,7 +40,7 @@ celery -A config.celery_app worker -l=INFO
 
 
 - **Shipment List**
-    - **GET** api/shipments?seller_id=<seller_id>
+    - **GET** api/sellers/<seller_id>/list_shipments/
 
 
 ## License
