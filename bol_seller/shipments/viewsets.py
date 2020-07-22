@@ -29,6 +29,7 @@ class SellerViewSet(ModelViewSet):
     """
     queryset = Seller.objects.all()
     serializer_class = SellerDetailSerializer
+    pagination_class = CustomPagination
 
     def list(self, request, *args, **kwargs):
         serialized_list = SellerDetailSerializer(Seller.objects.all(), many=True)
@@ -96,21 +97,12 @@ class SellerViewSet(ModelViewSet):
             {'msg': 'Please send a valid Seller ID'},
             status=status.HTTP_400_BAD_REQUEST
         )
-
-
-class ShipmentViewSet(ModelViewSet):
-    """
-    Viewset for shipment endpoints
-    """
-    queryset = Shipment.objects.all()
-    serializer_class = SellerDetailSerializer
-    pagination_class = CustomPagination
-
-    def list(self, request, *args, **kwargs):
-        seller_id = request.query_params.get('seller_id')
-        if seller_id:
+    
+    @action(detail=True, methods=['get'])
+    def list_shipments(self, request, pk=None, *args, **kwargs):
+        if pk:
             shipments = Shipment.objects.filter(
-                seller_id=seller_id, detail_fetched=True
+                seller_id=pk, detail_fetched=True
             ).prefetch_related(
                 'shipmentitem_set',
                 'shipmentitem_set__order_item',
@@ -123,17 +115,3 @@ class ShipmentViewSet(ModelViewSet):
             return self.get_paginated_response(serialized_list.data)
         return Response({'msg': 'Please send a seller ID'}, status=status.HTTP_400_BAD_REQUEST)
 
-    def retrieve(self, request, pk=None, *args, **kwargs):
-        return Response({}, status=status.HTTP_501_NOT_IMPLEMENTED)
-    
-    def create(self, request, *args, **kwargs):
-        return Response({}, status=status.HTTP_501_NOT_IMPLEMENTED)
-    
-    def update(self, request, pk=None, *args, **kwargs):
-        return Response({}, status=status.HTTP_501_NOT_IMPLEMENTED)
-    
-    def partial_update(self, request, pk=None, *args, **kwargs):
-        return Response({}, status=status.HTTP_501_NOT_IMPLEMENTED)
-    
-    def destroy(self, request, pk=None, *args, **kwargs):
-        return Response({}, status=status.HTTP_501_NOT_IMPLEMENTED)
